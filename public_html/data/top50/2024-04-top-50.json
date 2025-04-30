@@ -1,0 +1,252 @@
+[
+    {
+        "start_station_id": "5368.03",
+        "end_station_id": "5297.02",
+        "count": 588
+    },
+    {
+        "start_station_id": "6753.08",
+        "end_station_id": "6822.09",
+        "count": 531
+    },
+    {
+        "start_station_id": "6140.05",
+        "end_station_id": "6266.06",
+        "count": 516
+    },
+    {
+        "start_station_id": "6599.01",
+        "end_station_id": "6814.01",
+        "count": 492
+    },
+    {
+        "start_station_id": "6170.02",
+        "end_station_id": "5944.01",
+        "count": 490
+    },
+    {
+        "start_station_id": "6626.01",
+        "end_station_id": "6602.03",
+        "count": 484
+    },
+    {
+        "start_station_id": "5944.01",
+        "end_station_id": "6170.02",
+        "count": 471
+    },
+    {
+        "start_station_id": "6814.01",
+        "end_station_id": "6599.01",
+        "count": 455
+    },
+    {
+        "start_station_id": "6566.01",
+        "end_station_id": "6599.01",
+        "count": 454
+    },
+    {
+        "start_station_id": "6140.05",
+        "end_station_id": "6306.06",
+        "count": 453
+    },
+    {
+        "start_station_id": "5755.14",
+        "end_station_id": "5905.14",
+        "count": 445
+    },
+    {
+        "start_station_id": "5374.01",
+        "end_station_id": "5294.04",
+        "count": 421
+    },
+    {
+        "start_station_id": "5329.03",
+        "end_station_id": "5696.03",
+        "count": 414
+    },
+    {
+        "start_station_id": "5696.03",
+        "end_station_id": "5329.03",
+        "count": 409
+    },
+    {
+        "start_station_id": "6599.01",
+        "end_station_id": "6566.01",
+        "count": 404
+    },
+    {
+        "start_station_id": "6726.01",
+        "end_station_id": "6535.04",
+        "count": 399
+    },
+    {
+        "start_station_id": "7020.02",
+        "end_station_id": "7092.06",
+        "count": 399
+    },
+    {
+        "start_station_id": "6170.02",
+        "end_station_id": "6104.01",
+        "count": 397
+    },
+    {
+        "start_station_id": "5730.08",
+        "end_station_id": "5696.03",
+        "count": 391
+    },
+    {
+        "start_station_id": "5294.04",
+        "end_station_id": "5374.01",
+        "count": 390
+    },
+    {
+        "start_station_id": "6306.06",
+        "end_station_id": "6140.05",
+        "count": 387
+    },
+    {
+        "start_station_id": "6876.04",
+        "end_station_id": "7323.09",
+        "count": 380
+    },
+    {
+        "start_station_id": "7260.09",
+        "end_station_id": "7360.10",
+        "count": 375
+    },
+    {
+        "start_station_id": "5216.04",
+        "end_station_id": "5470.12",
+        "count": 362
+    },
+    {
+        "start_station_id": "7260.09",
+        "end_station_id": "7311.02",
+        "count": 357
+    },
+    {
+        "start_station_id": "6280.12",
+        "end_station_id": "6197.08",
+        "count": 350
+    },
+    {
+        "start_station_id": "5470.12",
+        "end_station_id": "5297.02",
+        "count": 347
+    },
+    {
+        "start_station_id": "5470.12",
+        "end_station_id": "5216.04",
+        "count": 346
+    },
+    {
+        "start_station_id": "5303.06",
+        "end_station_id": "5294.04",
+        "count": 346
+    },
+    {
+        "start_station_id": "6140.05",
+        "end_station_id": "6306.01",
+        "count": 341
+    },
+    {
+        "start_station_id": "6306.01",
+        "end_station_id": "6140.05",
+        "count": 340
+    },
+    {
+        "start_station_id": "4821.10",
+        "end_station_id": "4821.06",
+        "count": 338
+    },
+    {
+        "start_station_id": "6912.01",
+        "end_station_id": "7323.09",
+        "count": 329
+    },
+    {
+        "start_station_id": "6889.12",
+        "end_station_id": "6925.09",
+        "count": 329
+    },
+    {
+        "start_station_id": "6197.08",
+        "end_station_id": "6331.01",
+        "count": 322
+    },
+    {
+        "start_station_id": "5294.04",
+        "end_station_id": "5303.08",
+        "count": 319
+    },
+    {
+        "start_station_id": "5433.03",
+        "end_station_id": "5291.05",
+        "count": 318
+    },
+    {
+        "start_station_id": "5584.05",
+        "end_station_id": "5712.03",
+        "count": 315
+    },
+    {
+        "start_station_id": "5297.02",
+        "end_station_id": "5368.03",
+        "count": 315
+    },
+    {
+        "start_station_id": "6286.02",
+        "end_station_id": "6319.07",
+        "count": 314
+    },
+    {
+        "start_station_id": "6602.03",
+        "end_station_id": "6626.01",
+        "count": 314
+    },
+    {
+        "start_station_id": "7207.08",
+        "end_station_id": "7123.04",
+        "count": 314
+    },
+    {
+        "start_station_id": "6602.05",
+        "end_station_id": "6726.01",
+        "count": 310
+    },
+    {
+        "start_station_id": "6535.04",
+        "end_station_id": "6726.01",
+        "count": 306
+    },
+    {
+        "start_station_id": "7146.04",
+        "end_station_id": "7212.05",
+        "count": 306
+    },
+    {
+        "start_station_id": "5303.08",
+        "end_station_id": "5294.04",
+        "count": 305
+    },
+    {
+        "start_station_id": "6104.01",
+        "end_station_id": "6170.02",
+        "count": 304
+    },
+    {
+        "start_station_id": "6364.07",
+        "end_station_id": "6197.08",
+        "count": 303
+    },
+    {
+        "start_station_id": "6925.09",
+        "end_station_id": "6889.12",
+        "count": 300
+    },
+    {
+        "start_station_id": "7020.02",
+        "end_station_id": "6925.09",
+        "count": 300
+    }
+]

@@ -174,5 +174,6 @@ pyrightconfig.json
 private/*
 
 # Postprocessed station/ride information
+public_html/data/stations/*
 public/data/stations/*
 public/data/rides/*

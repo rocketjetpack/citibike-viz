@@ -28,6 +28,10 @@ const stationIcon = L.icon({
 
 const stationLayer = L.layerGroup().addTo(map);
 const stationById = {};
+const markerById = {};
+let selectedStationId = null;
+let selectedMarker = null;
+let hourlyChart = null;
 
 function loadStations() {
   fetch("data/station_list.csv")
@@ -57,79 +61,126 @@ function loadStations() {
           .addTo(stationLayer)
           .bindTooltip(row.station_name);
 
-        // Add click event to the marker
-        marker.on("click", () => {
-          selectStation(id);
-        });
+        marker.on("click", () => selectStation(id));
+
+        markerById[id] = marker;
       }
     });
 }
 
-loadStations();
-
-let selectedStation = null;
-let selectedMarker = null;
-const stationMarkers = {};
-
 function selectStation(stationId) {
-  const station = stationById[stationId];
-
-  if (!station) return;
-
-  // Log the selected station's information to the console
-  console.log(`Station selected: ${station.name} (ID: ${stationId})`);
-  console.log(`Latitude: ${station.lat.toFixed(6)}, Longitude: ${station.lng.toFixed(6)}`);
-
-  // Reset the previously selected station marker (if any)
+  console.log("Selected station:", stationId);
   if (selectedMarker) {
-    // Reset the style of the previously selected marker to default size
-    selectedMarker.setStyle({
-      fillColor: "#00bcd4", // Default color for unselected stations
-      color: "#fff",
-      weight: 1,
-      opacity: 0.6,
-      fillOpacity: 0.5,
-      radius: 5,  // Reset size to default
-    });
+    selectedMarker.setStyle({ radius: 5 });
   }
 
-  // Update the selected station and marker
-  selectedStation = stationId;
+  selectedStationId = stationId;
+  selectedMarker = markerById[stationId];
+  selectedMarker.setStyle({ radius: 8 });
 
-  // Populate the station details in the UI
+  const station = stationById[stationId];
   document.getElementById("stationName").textContent = station.name;
-  document.getElementById("stationLatLng").textContent = `${station.lat.toFixed(6)}, ${station.lng.toFixed(6)}`;
-  document.getElementById("rideCount").textContent = "Loading..."; // You can update this with actual ride data later
+  document.getElementById("stationLatLng").textContent = `${station.lat.toFixed(5)}, ${station.lng.toFixed(5)}`;
 
-  // Check if we already have the marker for the station
-  if (!stationMarkers[stationId]) {
-    // Create a new marker for the selected station
-    stationMarkers[stationId] = L.circleMarker([station.lat, station.lng], {
-      radius: 5,  // Default size
-      fillColor: "#00bcd4",
-      color: "#fff",
-      weight: 1,
-      opacity: 0.6,
-      fillOpacity: 0.5,
-    }).addTo(map);
+  // Store the station ID in the hidden input field
+  document.getElementById("selectedStationId").value = stationId;
 
-    // Add the click event listener for station selection
-    stationMarkers[stationId].on('click', () => selectStation(stationId));
+  // Load the data for the selected station and current month
+  updateStationData();
+}
+
+function updateStationData() {
+  const selectedStationId = document.getElementById("selectedStationId").value;
+  if (!selectedStationId) return;
+
+  const month = parseInt(document.getElementById("monthSlider").value);
+  const monthStr = month.toString().padStart(2, "0");
+  const prefix = selectedStationId.slice(0, 2);
+  const url = `data/stations/${prefix}/${selectedStationId}/2024-${monthStr}-ridedata.json`;
+
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error("Data not found");
+      return res.json();
+    })
+    .then((data) => {
+      const count = data?.summary?.total_inbound + data?.summary?.total_outbound;
+      document.getElementById("rideCount").textContent = count || 0;
+
+      if (Array.isArray(data.rides)) {
+        updateHourlyChart(data.rides);
+      } else {
+        updateHourlyChart([]);
+      }
+    })
+    .catch((err) => {
+      console.warn("No data for station/month:", err);
+      document.getElementById("rideCount").textContent = "--";
+      updateHourlyChart([]);
+    });
+}
+
+function updateHourlyChart(rides) {
+  console.log("updateHourlyChart() called with data: ", rides);
+  const inbound = new Array(24).fill(0);
+  const outbound = new Array(24).fill(0);
+
+  for (const ride of rides) {
+    const hour = new Date(ride.started_at.replace(" ", "T")).getHours();
+    if (Number(ride.direction) === 1) {
+      inbound[hour]++;
+    } else if (Number(ride.direction) === 0) {
+      outbound[hour]++;
+    }
   }
 
-  // Apply the highlight style to the newly selected station
-  selectedMarker = stationMarkers[stationId];
-  selectedMarker.setStyle({
-    radius: 7,  // Highlight size for the selected station
-    fillColor: "#ff0000", // Highlight color for the selected station
-    color: "#fff",
-    weight: 2,
-    opacity: 0.8,
-    fillOpacity: 0.6,
-  });
+  const ctx = document.getElementById("hourlyChart").getContext("2d");
 
-  // Bind the tooltip (you can add additional content here as needed)
-  selectedMarker.bindTooltip(station.name).openTooltip();
+  if (hourlyChart) {
+    hourlyChart.destroy();
+  }
+
+  hourlyChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: [...Array(24).keys()].map(h => `${h}:00`),
+      datasets: [
+        {
+          label: "Inbound",
+          data: inbound,
+          backgroundColor: "#4caf50",
+        },
+        {
+          label: "Outbound",
+          data: outbound.map(v => -v),
+          backgroundColor: "#f44336",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          stacked: true,
+        },
+        x: {
+          stacked: true,
+        },
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const label = context.dataset.label || "";
+              const value = Math.abs(context.raw);
+              return `${label}: ${value}`;
+            },
+          },
+        },
+      },
+    },
+  });
 }
 
 // --- Top 50 routes logic ---
@@ -152,7 +203,6 @@ async function toggleTopRoutes(show) {
     const routes = await response.json();
 
     const polylines = [];
-    const fixedLineWeight = 2;
 
     for (const route of routes) {
       const start = stationById[route.start_station_id];
@@ -162,7 +212,7 @@ async function toggleTopRoutes(show) {
 
       const line = L.polyline([[start.lat, start.lng], [end.lat, end.lng]], {
         color: "#ff9900",
-        weight: fixedLineWeight,
+        weight: 2,
         opacity: 0.85,
       });
 
@@ -176,3 +226,5 @@ async function toggleTopRoutes(show) {
     console.error("Failed to load top 50 routes:", err);
   }
 }
+
+loadStations();

@@ -12,10 +12,12 @@ def check_csv_columns(zip_file_path, reference_columns=None):
 
     # Open the ZIP file
     with zipfile.ZipFile(zip_file_path, 'r') as zip_file:
+        print(f"Zip File: {zip_file_path}")
         # Get all CSV file names in the ZIP
         csv_files = [name for name in zip_file.namelist() if name.endswith('.csv')]
         
         for csv_file in csv_files:
+            print(f"   CSV File: {csv_file}")
             # Open the CSV file and decode it properly
             with zip_file.open(csv_file) as f:
                 # Wrap the binary file stream in a TextIOWrapper to decode bytes to string

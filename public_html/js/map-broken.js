@@ -1,6 +1,4 @@
-const map = L.map("map", {
-  maxZoom: 18, // Set max zoom level
-}).setView([40.73, -73.95], 13);
+const map = L.map("map").setView([40.73, -73.95], 13);
 
 const lightTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
@@ -28,13 +26,13 @@ const stationIcon = L.icon({
   iconAnchor: [14, 14],
 });
 
-const stationClusterLayer = L.markerClusterGroup({
-  maxZoom: 18, // Set the max zoom for clustering
-}).addTo(map);
-
+// Station marker cluster
+const stationCluster = L.markerClusterGroup();
 const stationLayer = L.layerGroup().addTo(map);
+
 const stationById = {};
 const markerById = {};
+
 let selectedStationId = null;
 let selectedMarker = null;
 let hourlyChart = null;
@@ -44,6 +42,8 @@ function loadStations() {
     .then((res) => res.text())
     .then((text) => {
       const rows = Papa.parse(text, { header: true }).data;
+
+      console.log("Stations loaded:", rows); // Debugging line
 
       for (const row of rows) {
         const lat = parseFloat(row.station_lat);
@@ -56,10 +56,6 @@ function loadStations() {
           lng,
         };
 
-        if( isNaN(lat) || isNaN(lng) ){
-          console.log("Station ID ", id, " has invalid lat or lng: [ ", lat, ", ", lng, "]");
-        }
-
         const marker = L.circleMarker([lat, lng], {
           radius: 5,
           fillColor: "#00bcd4",
@@ -68,21 +64,21 @@ function loadStations() {
           opacity: 0.6,
           fillOpacity: 0.5,
         })
-          .addTo(stationClusterLayer) // Add to cluster layer
-          .bindTooltip(row.station_name);
-
-        marker.on("click", () => selectStation(id));
+          .bindTooltip(row.station_name)
+          .on("click", () => selectStation(id));
 
         markerById[id] = marker;
+
+        stationCluster.addLayer(marker);
       }
+
+      // Add the station cluster to the map
+      map.addLayer(stationCluster);
     });
 }
 
-let rideLinesLayer = L.layerGroup().addTo(map);  // This will hold the lines for the rides
-
 function selectStation(stationId) {
   console.log("Selected station:", stationId);
-  
   if (selectedMarker) {
     selectedMarker.setStyle({ radius: 5 });
   }
@@ -100,9 +96,6 @@ function selectStation(stationId) {
 
   // Load the data for the selected station and current month
   updateStationData();
-
-  // Load and display all rides to/from this station
-  drawRideLines(stationId);
 }
 
 function updateStationData() {
@@ -125,6 +118,7 @@ function updateStationData() {
 
       if (Array.isArray(data.rides)) {
         updateHourlyChart(data.rides);
+        drawRideLines(selectedStationId);  // Draw ride lines when station is selected
       } else {
         updateHourlyChart([]);
       }
@@ -199,6 +193,53 @@ function updateHourlyChart(rides) {
   });
 }
 
+// --- Polyline Clustering ---
+const polylineCluster = L.polylineCluster(); // Create a cluster for the polylines
+map.addLayer(polylineCluster); // Add the polyline cluster to the map
+
+function drawRideLines(stationId) {
+  polylineCluster.clearLayers(); // Clear existing lines
+
+  const month = parseInt(document.getElementById("monthSlider").value);
+  const monthStr = month.toString().padStart(2, "0");
+  const prefix = stationId.slice(0, 2);
+  const url = `data/stations/${prefix}/${stationId}/2024-${monthStr}-ridedata.json`;
+
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error("Data not found");
+      return res.json();
+    })
+    .then((data) => {
+      const rides = data?.rides || [];
+
+      rides.forEach((ride) => {
+        const startStation = stationById[ride.start_station_id];
+        const endStation = stationById[ride.end_station_id];
+
+        if (startStation && endStation) {
+          const line = L.polyline(
+            [
+              [startStation.lat, startStation.lng],
+              [endStation.lat, endStation.lng],
+            ],
+            {
+              color: ride.direction === "1" ? "#4caf50" : "#f44336", // Green for inbound, Red for outbound
+              weight: 2,
+              opacity: 0.75,
+            }
+          );
+
+          // Add the line to the polyline cluster
+          polylineCluster.addLayer(line);
+        }
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to load ride data for station:", err);
+    });
+}
+
 // --- Top 50 routes logic ---
 let topRoutesLayer = null;
 
@@ -230,63 +271,17 @@ async function toggleTopRoutes(show) {
         color: "#ff9900",
         weight: 2,
         opacity: 0.85,
-      });
+      }).bindTooltip(`${route.count} rides`, { permanent: false });
 
-      line.bindTooltip(`${route.count} rides`, { permanent: false });
       polylines.push(line);
     }
 
-    topRoutesLayer = L.layerGroup(polylines);
+    // Use polylineCluster for clustering polylines
+    topRoutesLayer = L.polylineCluster(polylines);
     topRoutesLayer.addTo(map);
   } catch (err) {
     console.error("Failed to load top 50 routes:", err);
   }
-}
-
-function drawRideLines(stationId) {
-  // Remove previous lines
-  rideLinesLayer.clearLayers();
-
-  const month = parseInt(document.getElementById("monthSlider").value);
-  const monthStr = month.toString().padStart(2, "0");
-  const prefix = stationId.slice(0, 2);
-  const url = `data/stations/${prefix}/${stationId}/2024-${monthStr}-ridedata.json`;
-
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error("Data not found");
-      return res.json();
-    })
-    .then((data) => {
-      const rides = data?.rides || [];
-      
-      rides.forEach((ride) => {
-        const startStation = stationById[ride.start_station_id];
-        const endStation = stationById[ride.end_station_id];
-
-        if (startStation && endStation) {
-          const line = L.polyline(
-            [
-              [startStation.lat, startStation.lng],
-              [endStation.lat, endStation.lng],
-            ],
-            {
-              color: ride.direction === "1" ? "#4caf50" : "#f44336", // Green for inbound, Red for outbound
-              weight: 2,
-              opacity: 0.75,
-            }
-          );
-
-          // Optionally, add a tooltip for the line
-          //line.bindTooltip(`${startStation.name} → ${endStation.name}`, { permanent: true });
-
-          line.addTo(rideLinesLayer); // Add the line to the map
-        }
-      });
-    })
-    .catch((err) => {
-      console.error("Failed to load ride data for station:", err);
-    });
 }
 
 loadStations();

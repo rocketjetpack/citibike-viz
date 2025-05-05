@@ -1,56 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crazy CitiBike Viz</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citi Bike Data Visualization</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/optionsPanel.css">
+  <link rel="stylesheet" href="css/stationPanel.css">
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin=""
+  />
+
+<!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
 </head>
 <body>
-  <div id="optionsPanel">
-    <div id="optionsHeader">Options</div>
-    <label for="monthSlider">Month:</label>
-    <input type="range" id="monthSlider" min="1" max="12" value="1" />
-    <span id="monthLabel">January</span>
-    <br />
-    <label><input type="checkbox" id="darkThemeToggle" checked /> Dark Theme</label>
-    <label>
-      <input type="checkbox" id="topRoutesToggle" />
-      Show Top 50 Routes
-    </label>
-  </div>
+  <!-- Header Section -->
+  <header id="mainHeader">Citi Bike Dashboard</header>
 
-  <header>
-    <h1>Crazy CitiBike Viz</h1>
-    <input type="hidden" id="selectedStationId">
-  </header>
-
+  <!-- Main Content Section -->
   <main>
-    <div id="map"></div>
-    <section id="stationInfo">
-      <div id="stationDetails">
-        <h2>Selected Station Info</h2>
-        <p><strong>Name:</strong> <span id="stationName">None</span></p>
-        <p><strong>Lat/Lng:</strong> <span id="stationLatLng">--</span></p>
-        <p><strong>Rides this month:</strong> <span id="rideCount">--</span></p>
+    <div id="map"></div> <!-- Map Container -->
+
+    <div id="stationPanel">
+      <div id="stationHeader">Station Information</div>
+      <div id="stationName">Station Name</div>
+      <!-- Grouping Ride Counts -->
+      <div id="rideCountsGroup">
+        <div id="rideCountsHeader">Ride Data</div>
+        <div id="rideCounts">
+          <div>
+            <div>Inbound</div>
+            <div id="inboundCount">0</div>
+          </div>
+          <div>
+            <div>Outbound</div>
+            <div id="outboundCount">0</div>
+          </div>
+        </div>
+        <div id="bikeFlux">
+          <div id="rideCountsHeader">
+            <div>Bike Flux</div>
+            <div id="bikeFluxCount">0</div>
+          </div>
+        </div>
       </div>
-      <div id="histogram"></div>
-        <h2>Hourly Histogram</h2>
-        <canvas id="hourlyChart"></canvas>
+    
+      
+      <div id="hourlyChart"></div>
+    </div>    
+
+    <!-- Options Panel -->
+    <div id="optionsPanel">
+      <div id="optionsHeader">Options</div>
+      <div class="monthSelector">
+        <div id="monthLabel">January</div>
+        <input type="range" id="monthSlider" min="1" max="12" value="1" />
       </div>
-    </section>
+      <label>
+        <input type="checkbox" id="chkShowTop50">
+        Show Top 50 Routes
+      </label>
+      <label>
+        <input type="checkbox" id="chkShowInbound">
+        Show Inbound Rides
+      </label>
+      <label>
+        <input type="checkbox" id="chkShowOutbound">
+        Show Outbound Rides
+      </label>
+      <div>
+        <label>
+          <input type="checkbox" id="chkDarkTheme">
+          Dark Theme
+        </label>
+      </div>
+    </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.polylinecluster@1.0.1/leaflet.polylinecluster.css" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet.polylinecluster@1.0.1/leaflet.polylinecluster.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/ui.js"></script>
+  <!-- Load the init.js module -->
+  <script type="module" src="js/init.js"></script>
 </body>
 </html>

@@ -1,292 +1,150 @@
-const map = L.map("map", {
-  maxZoom: 18, // Set max zoom level
-}).setView([40.73, -73.95], 13);
+let stationLayer = L.layerGroup();
+let stationMarkers = [];
+let lightLayer, darkLayer = null;
 
-const lightTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap contributors",
-});
+export async function createMap() {
+    // NYC coordinates
+    const center = [40.73, -73.95];
+    const zoom = 13;
 
-const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap, &copy; CartoDB",
-});
+    const isDark = document.getElementById('chkDarkTheme').checked;
 
-lightTiles.addTo(map);
+    // Light and dark tile layers
+    lightLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    });
 
-function switchBasemap(theme) {
-  if (theme === "dark") {
-    map.removeLayer(lightTiles);
-    darkTiles.addTo(map);
-  } else {
-    map.removeLayer(darkTiles);
-    lightTiles.addTo(map);
-  }
+    darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CartoDB'
+    });
+
+    // Initialize map
+    map = L.map('map', {
+        center: [40.73, -73.95],
+        zoom: 13,
+        layers: [isDark ? darkLayer : lightLayer]
+    });
+
+    map.on('zoomend', ()=> {
+        updateStationStyles();
+    });
+
+    map.addLayer(stationLayer);
+
+    await loadStations();
+
+    return { map, lightLayer, darkLayer };
 }
 
-const stationIcon = L.icon({
-  iconUrl: "assets/bike_icon.webp",
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
+async function loadStations() {
+    const res = await fetch('data/station_list.csv');
+    const text = await res.text();
+    const rows = text.trim().split('\n').slice(1);
+    rows.forEach(row => {
+      const [id, name, lat, lng] = row.split(',');
+      const marker = createStationMarker([parseFloat(lat), parseFloat(lng)]);
+      stationLayer.addLayer(marker);
+      stationMarkers.push(marker);
+    });
+    updateStationStyles();
+}
 
-const stationClusterLayer = L.markerClusterGroup({
-  maxZoom: 18, // Set the max zoom for clustering
-}).addTo(map);
-
-const stationLayer = L.layerGroup().addTo(map);
-const stationById = {};
-const markerById = {};
-let selectedStationId = null;
-let selectedMarker = null;
-let hourlyChart = null;
-
-function loadStations() {
-  fetch("data/station_list.csv")
-    .then((res) => res.text())
-    .then((text) => {
-      const rows = Papa.parse(text, { header: true }).data;
-
-      for (const row of rows) {
-        const lat = parseFloat(row.station_lat);
-        const lng = parseFloat(row.station_lng);
-        const id = row.station_id;
-
-        stationById[id] = {
-          name: row.station_name,
-          lat,
-          lng,
-        };
-
-        if( isNaN(lat) || isNaN(lng) ){
-          console.log("Station ID ", id, " has invalid lat or lng: [ ", lat, ", ", lng, "]");
-        }
-
-        const marker = L.circleMarker([lat, lng], {
-          radius: 5,
-          fillColor: "#00bcd4",
-          color: "#fff",
-          weight: 1,
-          opacity: 0.6,
-          fillOpacity: 0.5,
-        })
-          .addTo(stationClusterLayer) // Add to cluster layer
-          .bindTooltip(row.station_name);
-
-        marker.on("click", () => selectStation(id));
-
-        markerById[id] = marker;
-      }
+function createStationMarker(latlng) {
+    return L.circleMarker(latlng, {
+      radius: 6,
+      color: getOutlineColor(),
+      weight: 1,
+      opacity: 0.6,
+      fillColor: '#4FC3F7',
+      fillOpacity: getAlphaForZoom(),
+      opacity: getAlphaForZoom(),
     });
 }
 
-let rideLinesLayer = L.layerGroup().addTo(map);  // This will hold the lines for the rides
-
-function selectStation(stationId) {
-  console.log("Selected station:", stationId);
-  
-  if (selectedMarker) {
-    selectedMarker.setStyle({ radius: 5 });
-  }
-
-  selectedStationId = stationId;
-  selectedMarker = markerById[stationId];
-  selectedMarker.setStyle({ radius: 8 });
-
-  const station = stationById[stationId];
-  document.getElementById("stationName").textContent = station.name;
-  document.getElementById("stationLatLng").textContent = `${station.lat.toFixed(5)}, ${station.lng.toFixed(5)}`;
-
-  // Store the station ID in the hidden input field
-  document.getElementById("selectedStationId").value = stationId;
-
-  // Load the data for the selected station and current month
-  updateStationData();
-
-  // Load and display all rides to/from this station
-  drawRideLines(stationId);
+function getAlphaForZoom() {
+    const zoom = map.getZoom();
+    const clampedZoom = Math.max(11, Math.min(15, zoom));
+    const alpha = 0.15 + ((clampedZoom - 11) / (15 - 11)) * (0.75 - 0.15); // linear interpolation
+    return alpha;
 }
 
-function updateStationData() {
-  const selectedStationId = document.getElementById("selectedStationId").value;
-  if (!selectedStationId) return;
+// Apply styles to markers based on zoom level
+function updateStationStyles() {
+  const zoom = map.getZoom();
+  const { radius, fillOpacity } = getMarkerStyle(zoom);
 
-  const month = parseInt(document.getElementById("monthSlider").value);
-  const monthStr = month.toString().padStart(2, "0");
-  const prefix = selectedStationId.slice(0, 2);
-  const url = `data/stations/${prefix}/${selectedStationId}/2024-${monthStr}-ridedata.json`;
-
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error("Data not found");
-      return res.json();
-    })
-    .then((data) => {
-      const count = data?.summary?.total_inbound + data?.summary?.total_outbound;
-      document.getElementById("rideCount").textContent = count || 0;
-
-      if (Array.isArray(data.rides)) {
-        updateHourlyChart(data.rides);
-      } else {
-        updateHourlyChart([]);
+  stationLayer.eachLayer(layer => {
+      if (layer instanceof L.CircleMarker) {
+          layer.setStyle({ radius, fillOpacity });
       }
-    })
-    .catch((err) => {
-      console.warn("No data for station/month:", err);
-      document.getElementById("rideCount").textContent = "--";
-      updateHourlyChart([]);
-    });
-}
-
-function updateHourlyChart(rides) {
-  console.log("updateHourlyChart() called with data: ", rides);
-  const inbound = new Array(24).fill(0);
-  const outbound = new Array(24).fill(0);
-
-  for (const ride of rides) {
-    const hour = new Date(ride.started_at.replace(" ", "T")).getHours();
-    if (Number(ride.direction) === 1) {
-      inbound[hour]++;
-    } else if (Number(ride.direction) === 0) {
-      outbound[hour]++;
-    }
-  }
-
-  const ctx = document.getElementById("hourlyChart").getContext("2d");
-
-  if (hourlyChart) {
-    hourlyChart.destroy();
-  }
-
-  hourlyChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: [...Array(24).keys()].map(h => `${h}:00`),
-      datasets: [
-        {
-          label: "Inbound",
-          data: inbound,
-          backgroundColor: "#4caf50",
-        },
-        {
-          label: "Outbound",
-          data: outbound.map(v => -v),
-          backgroundColor: "#f44336",
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          stacked: true,
-        },
-        x: {
-          stacked: true,
-        },
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const label = context.dataset.label || "";
-              const value = Math.abs(context.raw);
-              return `${label}: ${value}`;
-            },
-          },
-        },
-      },
-    },
   });
 }
 
-// --- Top 50 routes logic ---
-let topRoutesLayer = null;
-
-async function toggleTopRoutes(show) {
-  if (topRoutesLayer) {
-    map.removeLayer(topRoutesLayer);
-    topRoutesLayer = null;
-  }
-
-  if (!show) return;
-
-  const month = parseInt(document.getElementById("monthSlider").value);
-  const monthStr = month.toString().padStart(2, "0");
-  const url = `data/top50/2024-${monthStr}-top-50.json`;
-
-  try {
-    const response = await fetch(url);
-    const routes = await response.json();
-
-    const polylines = [];
-
-    for (const route of routes) {
-      const start = stationById[route.start_station_id];
-      const end = stationById[route.end_station_id];
-
-      if (!start || !end) continue;
-
-      const line = L.polyline([[start.lat, start.lng], [end.lat, end.lng]], {
-        color: "#ff9900",
-        weight: 2,
-        opacity: 0.85,
-      });
-
-      line.bindTooltip(`${route.count} rides`, { permanent: false });
-      polylines.push(line);
-    }
-
-    topRoutesLayer = L.layerGroup(polylines);
-    topRoutesLayer.addTo(map);
-  } catch (err) {
-    console.error("Failed to load top 50 routes:", err);
-  }
+function getRadiusForZoom() {
+    const zoom = map.getZoom();
+    return Math.max(3, Math.min(10, 6 + (zoom - 13)));
 }
 
-function drawRideLines(stationId) {
-  // Remove previous lines
-  rideLinesLayer.clearLayers();
+function getOutlineColor() {
+    const dark = document.getElementById('chkDarkTheme').checked;
+    return dark ? 'white' : 'black';
+}
 
-  const month = parseInt(document.getElementById("monthSlider").value);
-  const monthStr = month.toString().padStart(2, "0");
-  const prefix = stationId.slice(0, 2);
-  const url = `data/stations/${prefix}/${stationId}/2024-${monthStr}-ridedata.json`;
+function getFillColor() {
+    return document.getElementById('chkDarkTheme').checked ? '#4FC3F7' : '#0080ff';
+}
 
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error("Data not found");
-      return res.json();
-    })
-    .then((data) => {
-      const rides = data?.rides || [];
-      
-      rides.forEach((ride) => {
-        const startStation = stationById[ride.start_station_id];
-        const endStation = stationById[ride.end_station_id];
-
-        if (startStation && endStation) {
-          const line = L.polyline(
-            [
-              [startStation.lat, startStation.lng],
-              [endStation.lat, endStation.lng],
-            ],
-            {
-              color: ride.direction === "1" ? "#4caf50" : "#f44336", // Green for inbound, Red for outbound
-              weight: 2,
-              opacity: 0.75,
-            }
-          );
-
-          // Optionally, add a tooltip for the line
-          //line.bindTooltip(`${startStation.name} → ${endStation.name}`, { permanent: true });
-
-          line.addTo(rideLinesLayer); // Add the line to the map
+function updateStationOutlines(dark) {
+    stationLayer.eachLayer(layer => {
+        if (layer instanceof L.CircleMarker) {
+            layer.setStyle({
+            color: dark ? 'white' : 'black',
+            opacity: 0.6,
+            });
         }
-      });
-    })
-    .catch((err) => {
-      console.error("Failed to load ride data for station:", err);
     });
 }
 
-loadStations();
+export function switchMapTheme() {
+    stationMarkers.forEach(marker => {
+        marker.setStyle({
+            color: getOutlineColor(),
+            fillColor: getFillColor(),
+            fillOpacity: getAlphaForZoom()
+        })
+    });
+
+    if (chkDarkTheme.checked) {
+      // Dark theme
+      if (map.hasLayer(lightLayer)) {
+        map.removeLayer(lightLayer);
+      }
+      map.addLayer(darkLayer);
+    } else {
+      // Light theme
+      if (map.hasLayer(darkLayer)) {
+        map.removeLayer(darkLayer);
+      }
+      map.addLayer(lightLayer);
+    }
+  }
+
+// Calculate radius and opacity based on zoom
+function getCircleStyle(zoom) {
+    const radius = Math.max(2, Math.min(10, zoom)); // radius between 2 and 10
+    const opacity = Math.min(1, 0.2 + zoom * 0.08);  // opacity grows with zoom
+    return {
+      radius,
+      color: '#00bfff',
+      fillColor: '#00bfff',
+      fillOpacity: opacity,
+      weight: 1
+    };
+}
+
+// Reusable function to calculate dynamic styles for markers
+function getMarkerStyle(zoom) {
+  const alpha = Math.max(0.15, Math.min(0.75, 0.15 + (zoom - 11) / 4 * (0.75 - 0.15)));
+  const radius = Math.max(3, Math.min(10, 6 + (zoom - 13)));
+  return { radius, fillOpacity: alpha };
+}

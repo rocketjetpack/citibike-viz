@@ -2,11 +2,15 @@ let map;
 let lightTileLayer;
 let darkTileLayer;
 
+export const stationCoords = new Map();
+
+/*
 export function loadStations(map, callback) {
   fetch('data/station_list.json')
     .then(response => response.json())
     .then(stations => {
       const stationMarkers = stations.map(station => {
+        
         const marker = L.circleMarker([station.station_lat, station.station_lng], {
           radius: 8,
           color: 'blue', // Default color for markers
@@ -24,6 +28,7 @@ export function loadStations(map, callback) {
     })
     .catch(error => console.error('Error loading station data:', error));
 }
+*/
 
 export function initializeMap() {
   // Create the map

@@ -82,6 +82,13 @@ input[type="checkbox"],
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Adjust header bar height */
+#header {
+  height: 50px; /* Set the desired height */
+  padding: 10px 20px; /* Adjust padding for spacing inside the header */
+  line-height: 30px; /* Adjust line-height to center text vertically */
+}
+
 #mainHeader {
   position: fixed;
   top: 0;
@@ -90,8 +97,10 @@ input[type="checkbox"],
   height: 30px;
   background-color: #333;
   color: white;
-  padding: 10px;
+  padding: 5px;
   z-index: 1001;
+  text-align: left;
+  vertical-align: middle;
 }
 
 #histogramChartContainer {

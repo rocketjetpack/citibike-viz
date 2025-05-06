@@ -2,6 +2,7 @@ import { initializeMap } from './map.js';
 import { initializeStationManager } from './stationManager.js';
 import { initializeOptionsPanel } from './optionsPanel.js';
 import { initializeEvents } from './events.js';
+import { initializeRideLines } from './rideLines.js';
 
 export const months = [
   "January", "February", "March", "April", "May", "June",
@@ -13,6 +14,7 @@ const map = initializeMap();
 
 // Initialize the station manager to handle station selection
 initializeStationManager(map);
+initializeRideLines(map);
 
 // Initialize the options panel and its functionality (theme toggle, sliders, etc.)
 initializeOptionsPanel();

@@ -1,10 +1,11 @@
 import { getDefaultStationStyle, getSelectedStationStyle, getStationStyle, getInterpolatedAlpha } from './styles.js';
 import { getTheme } from './optionsPanel.js';
 import { updateHistogram, destroyHistogram } from './histogram.js'; // Make sure you have this helper module
-
+import { drawRideLines, destroyRideLines } from './rideLines.js';
 
 let stationMarkers = new Map(); // station_id => marker
 let selectedStationId = null;
+export const stationCoords = new Map();
 
 // Called from init.js
 export async function initializeStationManager(map) {
@@ -24,7 +25,8 @@ export async function initializeStationManager(map) {
         justClickedMarker = true;
         selectStation(stationId, map.getZoom());
       });
-
+    const { station_id, station_lat, station_lng } = station;
+    stationCoords.set(station_id, [parseFloat(station_lat), parseFloat(station_lng)]);
     marker.bindTooltip(station.station_name, { permanent: false });
     stationMarkers.set(stationId, marker);
   });
@@ -87,6 +89,7 @@ export function clearSelectedStation(zoom) {
   canvas.width = container.offsetWidth;
   canvas.height = Math.max(container.offsetHeight, 200); // Ensure a minimum height of 200px
   destroyHistogram();
+  destroyRideLines();
 }
 
 
@@ -137,6 +140,7 @@ export function loadStationRideData(stationId, month) {
       }
 
       // Now you can update the histogram with hourlyCounts
+      drawRideLines(data);
       updateHistogram(hourlyCounts);
     })
     .catch(error => {

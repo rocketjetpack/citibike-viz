@@ -59,5 +59,7 @@ export function initializeStationPanel() {
       updateStationPanel(stationData);
       toggleStationPanel(true);
     });
+
+    document.getElementById('stationName').textContent = 'Select a Station For Info';
 }
   

@@ -87,9 +87,14 @@ input[type="checkbox"],
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 30px;
   background-color: #333;
   color: white;
   padding: 10px;
   z-index: 1001;
+}
+
+#histogramChartContainer {
+  min-height: 250px; /* Minimum height */
+  position: relative;
 }

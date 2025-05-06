@@ -1,20 +1,15 @@
-import { switchMapTheme } from "./map.js";
+//import { switchMapTheme } from "./map.js";
+import { toggleDarkTheme } from './map.js'; // Import the function to toggle the map theme
 
-export function setupEventListeners() {
+export function initializeEvents() {
+  console.log("Initializing events.");
+
   const chkDarkTheme = document.getElementById('chkDarkTheme');
   const body = document.body;
   const header = document.querySelector('header');
 
   chkDarkTheme.addEventListener('change', () => {
-    const dark = chkDarkTheme.checked;
-    if (dark) {
-      body.classList.add('dark');
-      header.classList.add('dark');
-    } else {
-      body.classList.remove('dark');
-      header.classList.remove('dark');
-    }
-    switchMapTheme();
+    toggleDarkTheme(chkDarkTheme.checked);
   });
 
   const monthSlider = document.getElementById('monthSlider');
@@ -28,4 +23,6 @@ export function setupEventListeners() {
     const value = parseInt(monthSlider.value, 10);
     monthLabel.textContent = months[value - 1];
   });
+
+  
 }

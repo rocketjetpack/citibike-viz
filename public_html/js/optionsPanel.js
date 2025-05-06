@@ -1,5 +1,5 @@
 import { months } from './init.js';
-
+import { toggleDarkTheme } from './map.js'; // Import the function to toggle the map theme
 
 export function initializeOptionsPanel() {
   const optionsPanel = document.getElementById('optionsPanel');
@@ -18,8 +18,10 @@ export function initializeOptionsPanel() {
 
   document.addEventListener('mousemove', (e) => {
       if (isDragging) {
-          optionsPanel.style.left = `${e.clientX - offsetX}px`;
-          optionsPanel.style.top = `${e.clientY - offsetY}px`;
+        const newLeft = e.clientX - offsetX;
+        const newTop = Math.max(0, e.clientY - offsetY);  // Clamp top so it never goes above 0
+        optionsPanel.style.left = `${newLeft}px`;
+        optionsPanel.style.top = `${newTop}px`;
       }
   });
 
@@ -42,6 +44,8 @@ export function initializeOptionsPanel() {
 // Save options state in localStorage
 function saveOptionsState() {
   const state = {
+      top: document.getElementById('optionsPanel').style.top,
+      left: document.getElementById('optionsPanel').style.left,
       month: document.getElementById('monthSlider').value,
       darkTheme: document.getElementById('chkDarkTheme').checked,
       showTopRoutes: document.getElementById('chkShowTop50').checked,
@@ -84,6 +88,8 @@ function initializeEventListeners() {
   // Load options from saved state
   const savedState = JSON.parse(localStorage.getItem('optionsState'));
   if (savedState) {
+      document.getElementById('optionsPanel').style.top = savedState.top;
+      document.getElementById('optionsPanel').style.left = savedState.left;
       monthSlider.value = savedState.month;
       document.getElementById('monthLabel').textContent = months[savedState.month - 1];
       darkThemeToggle.checked = savedState.darkTheme;
@@ -94,8 +100,15 @@ function initializeEventListeners() {
       // Apply the dark theme if saved in localStorage
       if (savedState.darkTheme) {
           document.body.classList.add('dark-theme');
+          toggleDarkTheme(true);
       } else {
           document.body.classList.remove('dark-theme');
+          toggleDarkTheme(false);
       }
+      
   }
+}
+
+export function getTheme() {
+    return document.getElementById('chkDarkTheme').checked;
 }

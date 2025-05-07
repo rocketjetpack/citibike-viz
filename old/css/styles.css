@@ -1,0 +1,109 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+  transition: background-color 0.3s, color 0.3s ease;
+}
+
+/* Dark Theme Styles */
+body.dark-theme {
+  background-color: #121212;
+}
+
+
+body.dark-theme label {
+  color: #ccc;
+}
+
+body.dark-theme .slider {
+  background-color: #444;
+}
+
+body.dark-theme input[type="checkbox"] {
+  background-color: #444;
+}
+
+/* Dark Theme Styles for Station Panel */
+body.dark-theme #stationPanel {
+  background-color: #333;
+  color: white;
+  border: 1px solid #444;
+}
+
+body.dark-theme #stationHeader {
+  color: #fff;
+}
+
+body.dark-theme #rideCounts div div {
+  color: #ccc;
+}
+
+body.dark-theme #bikeFlux {
+  color: #ccc;
+}
+
+/* Slider Styles */
+input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
+}
+
+/* Checkbox Styles */
+input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+/* Toggle Styles */
+input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+}
+
+input[type="checkbox"]:not(:checked) {
+  background-color: #ccc;
+}
+
+/* Map Styles */
+#map {
+  height: 100vh;
+  width: 100%;
+}
+
+/* Themed Styles for Map and other elements */
+body.dark-theme #map {
+  background-color: #2c2c2c;
+}
+
+label,
+.slider,
+input[type="checkbox"],
+#map {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Adjust header bar height */
+#header {
+  height: 50px; /* Set the desired height */
+  padding: 10px 20px; /* Adjust padding for spacing inside the header */
+  line-height: 30px; /* Adjust line-height to center text vertically */
+}
+
+#mainHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background-color: #333;
+  color: white;
+  padding: 5px;
+  z-index: 1001;
+  text-align: left;
+  vertical-align: middle;
+}
+
+#histogramChartContainer {
+  min-height: 300px; /* Minimum height */
+  position: relative;
+}

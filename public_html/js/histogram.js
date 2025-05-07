@@ -1,3 +1,99 @@
+let currentChart = null;
+
+export function destroyHistogram() {
+  if (currentChart) {
+    currentChart.destroy();
+    currentChart = null;
+  }
+}
+
+export function updateHistogram(hourlyCounts, themeIsDark = false) {
+  const container = document.getElementById('histogramChartContainer');
+
+  if (!container) {
+    console.error('Error: histogram chart container not found.');
+    return;
+  }
+
+  const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  const inboundCounts = hourlyCounts[0];
+  const outboundCounts = hourlyCounts[1];
+
+  destroyHistogram(); // Clean up any existing chart
+
+  currentChart = Highcharts.chart(container, {
+    chart: {
+      type: 'column',
+      backgroundColor: 'transparent',
+      height: container.offsetHeight || 250,
+    },
+    plotOptions: {
+      series: {
+        stacking: 'normal'
+      }
+    },
+    title: {
+      text: 'Hourly Rides',
+      style: { 
+        fontSize: '14px',
+        color: themeIsDark ? '#ffffff' : '#000000'
+      }
+    },
+    xAxis: {
+      categories: hours,
+      title: {
+        text: 'Hour of the Day',
+        style: {
+          color: themeIsDark ? '#ffffff' : '#000000'
+        }
+      },
+      labels: {
+        style: {
+          color: themeIsDark ? '#ffffff' : '#000000'
+        }
+      }
+    },
+    yAxis: {
+      title: {
+        text: null
+      },
+      labels: {
+        style: {
+          color: themeIsDark ? '#ffffff' : '#000000'
+        }
+      }
+    },
+    tooltip: {
+      shared: true
+    },
+    plotOptions: {
+      column: {
+        stacking: 'normal'
+      }
+    },
+    legend: {
+      align: 'center',
+      verticalAlign: 'bottom'
+    },
+    series: [
+      {
+        name: 'Inbound Rides',
+        data: inboundCounts,
+        color: 'rgba(0, 128, 0, 0.8)'
+      },
+      {
+        name: 'Outbound Rides',
+        data: outboundCounts.map(count => -count), // Negative for "below zero"
+        color: 'rgba(255, 0, 0, 0.8)'
+      }
+    ],
+    credits: { enabled: false }
+  });
+}
+
+
+/*
+FORMER CHARTS.JS CODE
 let currentChart = null; // Store the current chart instance
 
 export function destroyHistogram() {
@@ -84,3 +180,4 @@ export function updateHistogram(hourlyCounts) {
     }
   });
 }
+*/

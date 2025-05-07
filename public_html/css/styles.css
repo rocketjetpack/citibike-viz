@@ -104,6 +104,6 @@ input[type="checkbox"],
 }
 
 #histogramChartContainer {
-  min-height: 250px; /* Minimum height */
+  min-height: 300px; /* Minimum height */
   position: relative;
 }

@@ -1,6 +1,10 @@
 import { months } from './init.js';
 import { toggleDarkTheme } from './map.js'; // Import the function to toggle the map theme
 
+export function getCheckedRideDirections() {
+    return [ document.getElementById('chkShowOutbound').checked, document.getElementById('chkShowInbound').checked ];
+}
+
 export function initializeOptionsPanel() {
   const optionsPanel = document.getElementById('optionsPanel');
   const optionsHeader = document.getElementById('optionsHeader');

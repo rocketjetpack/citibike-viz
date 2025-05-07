@@ -2,10 +2,13 @@ import { getDefaultStationStyle, getSelectedStationStyle, getStationStyle, getIn
 import { getTheme } from './optionsPanel.js';
 import { updateHistogram, destroyHistogram } from './histogram.js'; // Make sure you have this helper module
 import { drawRideLines, destroyRideLines } from './rideLines.js';
+import { debounce, getCurrentMonth } from './utils.js';
 
 let stationMarkers = new Map(); // station_id => marker
 let selectedStationId = null;
 export const stationCoords = new Map();
+
+const debouncedUpdateMarkerStyles = debounce(updateAllMarkerStyles, 100);
 
 // Called from init.js
 export async function initializeStationManager(map) {
@@ -40,7 +43,7 @@ export async function initializeStationManager(map) {
   });
 
   map.on('zoomend', () => {
-    updateAllMarkerStyles(map.getZoom());
+    debouncedUpdateMarkerStyles(map.getZoom());
   });
 
   const selectedIdInput = document.getElementById('selectedStationId');
@@ -83,11 +86,11 @@ export function clearSelectedStation(zoom) {
   document.getElementById('bikeFluxCount').innerHTML = '0';
 
   // Clear the histogram chart
-  const canvas = document.getElementById('histogramChart');
-  const container = document.getElementById('histogramChartContainer');
+  //const canvas = document.getElementById('histogramChart');
+  //const container = document.getElementById('histogramChartContainer');
   // Reset the canvas dimensions (optional, to clear any drawing or resizing)
-  canvas.width = container.offsetWidth;
-  canvas.height = Math.max(container.offsetHeight, 200); // Ensure a minimum height of 200px
+  //canvas.width = container.offsetWidth;
+  //canvas.height = Math.max(container.offsetHeight, 200); // Ensure a minimum height of 200px
   destroyHistogram();
   destroyRideLines();
 }
@@ -95,9 +98,12 @@ export function clearSelectedStation(zoom) {
 
 export function updateAllMarkerStyles(zoom) {
   const theme = getTheme();
+  const markerStyle = getStationStyle(false, theme, zoom);
+
   stationMarkers.forEach((marker, stationId) => {
     const isSelected = stationId === selectedStationId;
-    marker.setStyle(getStationStyle(isSelected, theme, zoom));
+
+    if( isSelected ) { marker.setStyle(getStationStyle(true, theme, zoom));} else { marker.setStyle(markerStyle); }
   });
 }
 
@@ -141,7 +147,7 @@ export function loadStationRideData(stationId, month) {
 
       // Now you can update the histogram with hourlyCounts
       drawRideLines(data);
-      updateHistogram(hourlyCounts);
+      updateHistogram(hourlyCounts, getTheme());
     })
     .catch(error => {
       console.error('Error loading station ride data:', error);
@@ -169,5 +175,43 @@ export function processHourlyRideData(rides) {
   return hourlyCounts;  // This will be an array with two elements (inbound, outbound)
 }
 
+export function handleMonthChange() {
+  const month = getCurrentMonth();
+  const stationId = selectedStationId;
 
+  if (!stationId) return; // No station selected, nothing to update
 
+  const jsonPath = `data/stations/${stationId.slice(0, 2)}/${stationId}/2024-${month}-ridedata.json`;
+
+  fetch(jsonPath)
+    .then(res => {
+      if (!res.ok) throw new Error(`Missing data for ${stationId} in ${month}`);
+      return res.json();
+    })
+    .then(data => {
+      updateStationPanel(data, stationId);
+      drawRideLines(data);
+    })
+    .catch(err => {
+      console.error(err);
+      // Clear data if load fails
+      updateStationPanel(null, stationId);
+      destroyRideLines();
+    });
+}
+
+export function updateStationPanel(data, stationId) {
+  console.log("updateStationPanel() called for station ", stationId, "with data:");
+  console.log(data);
+
+  const inboundCount = data.summary.total_inbound;
+  const outboundCount = data.summary.total_outbound;
+  const fluxCount = data.summary.flux;
+
+  document.getElementById('inboundCount').innerHTML = inboundCount;
+  document.getElementById('outboundCount').innerHTML = outboundCount;
+  document.getElementById('bikeFluxCount').innerHTML = fluxCount;
+
+  const hourlyCounts = processHourlyRideData(data.rides);
+  updateHistogram(hourlyCounts, getTheme());
+}

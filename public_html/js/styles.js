@@ -29,7 +29,7 @@ export function getSelectedStationStyle() {
 
 export function getStationStyle(isSelected, isDarkTheme, zoom) {
   const fillAlpha = getInterpolatedAlpha(zoom, 11, 15, 0.5, 0.25);
-  const outlineAlpha = getInterpolatedAlpha(zoom, 11, 15, 0.55, 0.30);
+  const outlineAlpha = getInterpolatedStrokeAlpha(zoom, 11, 15, 0.3, 0.55);
 
   if (isSelected) {
     return {
@@ -40,8 +40,12 @@ export function getStationStyle(isSelected, isDarkTheme, zoom) {
       fillOpacity: fillAlpha
     };
   } else {
-    const fillColor = isDarkTheme ? `rgba(173, 216, 230, ${fillAlpha})` : `rgba(0, 0, 139, ${fillAlpha})`; // lightblue/darkblue
-    const outlineColor = isDarkTheme ? `rgba(255,255,255,${outlineAlpha})` : `rgba(0,0,0,${outlineAlpha})`;
+    const fillColor = isDarkTheme
+      ? `rgba(173, 216, 230, ${fillAlpha})`
+      : `rgba(0, 0, 139, ${fillAlpha})`; // lightblue/darkblue
+    const outlineColor = isDarkTheme
+      ? `rgba(255,255,255,${outlineAlpha})`
+      : `rgba(0,0,0,${outlineAlpha})`;
 
     return {
       radius: 6,
@@ -51,6 +55,18 @@ export function getStationStyle(isSelected, isDarkTheme, zoom) {
       fillOpacity: fillAlpha
     };
   }
+}
+
+function getInterpolatedStrokeAlpha(zoom) {
+  // Customize min/max zoom and alpha range as needed
+  const minZoom = 11;
+  const maxZoom = 17;
+  const minAlpha = 0.1;
+  const maxAlpha = 0.8;
+
+  const clampedZoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+  const t = (clampedZoom - minZoom) / (maxZoom - minZoom);
+  return minAlpha + t * (maxAlpha - minAlpha);
 }
 
 

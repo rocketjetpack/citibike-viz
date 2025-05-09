@@ -3,7 +3,7 @@ import { getTheme } from './optionsPanel.js';
 import { updateHistogram, destroyHistogram } from './histogram.js'; // Make sure you have this helper module
 import { drawRideLines, destroyRideLines } from './rideLines.js';
 import { debounce, getCurrentMonth } from './utils.js';
-import { initPieChart, updatePieChart, clearPieChart } from './js/piechart.js';
+import { updatePieChart } from './pieChart.js';
 
 let stationMarkers = new Map(); // station_id => marker
 let selectedStationId = null;

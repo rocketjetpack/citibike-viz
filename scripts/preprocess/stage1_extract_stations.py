@@ -2,7 +2,8 @@ import os
 import csv
 import zipfile
 import sys
-import re  # Import the regular expression module
+import re
+from datetime import datetime
 
 def extract_unique_stations(zip_dir, output_csv_path):
     unique_stations = {}
@@ -37,6 +38,7 @@ def extract_unique_stations(zip_dir, output_csv_path):
                             print_progress(row_counter)
 
                         for station_type in ['start', 'end']:
+                            ride_time = datetime.strptime(row.get('started_at'), '%Y-%m-%d %H:%M:%S.%f')
                             station_id_key = f'{station_type}_station_id'
                             station_name_key = f'{station_type}_station_name'
                             station_lat_key = f'{station_type}_lat'
@@ -49,7 +51,8 @@ def extract_unique_stations(zip_dir, output_csv_path):
                                     'station_id': station_id,
                                     'station_name': row.get(station_name_key, ''),
                                     'station_lat': row.get(station_lat_key, ''),
-                                    'station_lng': row.get(station_lng_key, '')
+                                    'station_lng': row.get(station_lng_key, ''),
+                                    'appeared': ride_time.month
                                 }
 
     print_progress(row_counter)
@@ -57,7 +60,7 @@ def extract_unique_stations(zip_dir, output_csv_path):
 
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     with open(output_csv_path, 'w', newline='', encoding='utf-8') as f_out:
-        writer = csv.DictWriter(f_out, fieldnames=['station_id', 'station_name', 'station_lat', 'station_lng'])
+        writer = csv.DictWriter(f_out, fieldnames=['station_id', 'station_name', 'station_lat', 'station_lng', 'appeared'])
         writer.writeheader()
         writer.writerows(unique_stations.values())
 

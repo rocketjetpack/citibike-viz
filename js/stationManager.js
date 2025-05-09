@@ -3,6 +3,7 @@ import { getTheme } from './optionsPanel.js';
 import { updateHistogram, destroyHistogram } from './histogram.js'; // Make sure you have this helper module
 import { drawRideLines, destroyRideLines } from './rideLines.js';
 import { debounce, getCurrentMonth } from './utils.js';
+import { initPieChart, updatePieChart, clearPieChart } from './js/piechart.js';
 
 let stationMarkers = new Map(); // station_id => marker
 let selectedStationId = null;
@@ -131,7 +132,7 @@ export function loadStationRideData(stationId, month) {
     })
     .then(data => {
       // Process hourly counts
-      const hourlyCounts = processHourlyRideData(data.rides);
+      const { hourlyCounts, rideTypeTotals } = processHourlyRideData(data.rides);
       
       console.log(data.summary);
       document.getElementById('inboundCount').innerHTML = data.summary.total_inbound;
@@ -148,15 +149,43 @@ export function loadStationRideData(stationId, month) {
       // Now you can update the histogram with hourlyCounts
       drawRideLines(data);
       updateHistogram(hourlyCounts, getTheme());
+      updatePieChart(rideTypeTotals);
     })
     .catch(error => {
       console.error('Error loading station ride data:', error);
     });
 }
 
+export function processHourlyRideData(rides) {
+  const hourlyCounts = [Array(24).fill(0), Array(24).fill(0)];  // [inbound, outbound]
+  const rideTypeTotals = { inbound: 0, outbound: 0, looped: 0 };
+
+  rides.forEach(ride => {
+    const hour = new Date(ride.started_at).getHours();
+
+    if (ride.direction === '1') {
+      hourlyCounts[0][hour]++;
+      rideTypeTotals.inbound++;
+    } else if (ride.direction === '0') {
+      hourlyCounts[1][hour]++;
+      rideTypeTotals.outbound++;
+    } else if (ride.direction === '2') {
+      // Count for both histogram and pie chart
+      hourlyCounts[0][hour]++;
+      hourlyCounts[1][hour]++;
+      rideTypeTotals.inbound++;
+      rideTypeTotals.outbound++;
+      rideTypeTotals.looped++;
+    }
+  });
+
+  return { hourlyCounts, rideTypeTotals };
+}
+
+/*
 // Assuming this function is being called in the right context (after selecting a station and month)
 export function processHourlyRideData(rides) {
-  const hourlyCounts = [Array(24).fill(0), Array(24).fill(0)];  // Initialize 2D array: index 0 for inbound, index 1 for outbound
+  const hourlyCounts = [Array(24).fill(0), Array(24).fill(0), Array(24).fill(0)];  // Initialize 2D array: index 0 for inbound, index 1 for outbound
   
   // Iterate over the rides to populate the hourly counts
   rides.forEach(ride => {
@@ -167,13 +196,13 @@ export function processHourlyRideData(rides) {
     } else if (ride.direction === '0') {  // Outbound ride
       hourlyCounts[1][hour] += 1;
     } else if (ride.direction === '2') { //Looped rides
-      hourlyCounts[0][hour] += 1;
-      hourlyCounts[1][hour] += 1;
+      hourlyCounts[2][hour] += 1;
     }
   });
   
   return hourlyCounts;  // This will be an array with two elements (inbound, outbound)
 }
+*/
 
 export function handleMonthChange() {
   const month = getCurrentMonth();

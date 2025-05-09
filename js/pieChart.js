@@ -3,10 +3,9 @@ import { getTheme } from "./optionsPanel.js";
 let pieChart;
 
 function initPieChart(containerId = 'rideTypeChart') {
-  clearPieChart(); // Clear existing chart (if any)
+  destroyPieChart(); // Clear existing chart (if any)
 
-  const theme = getTheme(); // 'light' or 'dark'
-  const isDark = theme === 'dark';
+  const isDark = getTheme(); // 'light' or 'dark'
 
   pieChart = Highcharts.chart(containerId, {
     chart: {
@@ -15,11 +14,10 @@ function initPieChart(containerId = 'rideTypeChart') {
       backgroundColor: 'transparent', // Transparent background
     },
     title: {
-      text: 'Ride Types', // Title of the pie chart
-      style: {
-        color: isDark ? '#ffffff' : '#000000', // Change title color based on theme
-        fontSize: '16px',
-        fontWeight: 'bold',
+      text: 'Ride Types',
+      style: { 
+        fontSize: '14px',
+        color: isDark ? '#ffffff' : '#000000'
       }
     },
     tooltip: {
@@ -76,7 +74,7 @@ export function updatePieChart(rideTypeTotals) {
   ]);
 }
 
-export function clearPieChart() {
+export function destroyPieChart() {
   if (pieChart) {
     pieChart.destroy(); // Destroy the existing chart
     pieChart = null;

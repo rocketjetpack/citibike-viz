@@ -63,6 +63,14 @@
   font-size: 14px;
 }
 
+#inboundCount {
+  color: green;
+}
+
+#outboundCount {
+  color: red;
+}
+
 #rideCounts > div > div {
   margin: 0;
   padding: 0;

@@ -73,7 +73,10 @@ export function updateHistogram(hourlyCounts, themeIsDark = false) {
     },
     legend: {
       align: 'center',
-      verticalAlign: 'bottom'
+      verticalAlign: 'bottom',
+      itemStyle: {
+        color: themeIsDark ? '#ffffff' : '#000000'
+      }
     },
     series: [
       {

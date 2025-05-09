@@ -3,7 +3,7 @@ import { getTheme } from './optionsPanel.js';
 import { updateHistogram, destroyHistogram } from './histogram.js'; // Make sure you have this helper module
 import { drawRideLines, destroyRideLines } from './rideLines.js';
 import { debounce, getCurrentMonth } from './utils.js';
-import { updatePieChart } from './pieChart.js';
+import { updatePieChart, destroyPieChart } from './pieChart.js';
 
 let stationMarkers = new Map(); // station_id => marker
 let selectedStationId = null;
@@ -94,6 +94,7 @@ export function clearSelectedStation(zoom) {
   //canvas.height = Math.max(container.offsetHeight, 200); // Ensure a minimum height of 200px
   destroyHistogram();
   destroyRideLines();
+  destroyPieChart();
 }
 
 

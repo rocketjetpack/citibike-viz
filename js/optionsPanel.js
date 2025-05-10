@@ -1,5 +1,6 @@
 import { months } from './init.js';
 import { toggleDarkTheme } from './map.js'; // Import the function to toggle the map theme
+import { updateVisibleStations } from './stationManager.js';
 
 export function getCheckedRideDirections() {
     return [ document.getElementById('chkShowOutbound').checked, document.getElementById('chkShowInbound').checked ];
@@ -82,6 +83,7 @@ function initializeEventListeners() {
   darkThemeToggle.addEventListener('change', () => {
       document.body.classList.toggle('dark-theme', darkThemeToggle.checked);
       saveOptionsState();  // Save state when toggled
+      updateVisibleStations(getSelectedMonth(), map.getZoom());
   });
 
   // Top Routes toggle

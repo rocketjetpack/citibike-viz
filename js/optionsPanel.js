@@ -45,6 +45,10 @@ export function initializeOptionsPanel() {
   initializeEventListeners();
 }
 
+export function getSelectedMonth() {
+    return document.getElementById("monthSlider").value;
+}
+
 // Save options state in localStorage
 function saveOptionsState() {
   const state = {

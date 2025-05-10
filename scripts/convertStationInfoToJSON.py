@@ -1,8 +1,8 @@
 import csv
 import json
 
-csv_path = "../public_html/data/station_list.csv"
-json_path = "../public_html/data/station_list.json"
+csv_path = "../data/station_list.csv"
+json_path = "../data/station_list.json"
 
 with open(csv_path, newline='', encoding='utf-8') as csvfile:
   reader = csv.DictReader(csvfile)

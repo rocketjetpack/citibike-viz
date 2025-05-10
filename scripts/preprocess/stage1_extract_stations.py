@@ -5,7 +5,7 @@ import sys
 import re
 from datetime import datetime
 
-DEBUG=True
+DEBUG=False
 
 def extract_unique_stations(zip_dir, output_csv_path):
     unique_stations = {}
@@ -31,10 +31,16 @@ def extract_unique_stations(zip_dir, output_csv_path):
                     continue
 
                 with zf.open(csv_filename) as csvfile:
-                    reader = csv.DictReader(
-                        (line.decode('utf-8') for line in csvfile),
-                        delimiter=','
-                    )
+                    print(f"Opened {csv_filename}!!!!")
+                    print(f"Opened {csv_filename}!!!!")
+                    print(f"Opened {csv_filename}!!!!")
+                    print(f"Opened {csv_filename}!!!!")
+                    print(f"Opened {csv_filename}!!!!")
+                    print(f"Opened {csv_filename}!!!!")
+                    try:
+                        reader = csv.DictReader((line.decode('utf-8') for line in csvfile), delimiter=',')
+                    except:
+                        print(f"Problem on row in {csvfile}!")
 
                     for row in reader:
                         row_counter += 1
@@ -45,7 +51,10 @@ def extract_unique_stations(zip_dir, output_csv_path):
                             break
 
                         for station_type in ['start', 'end']:
-                            ride_time = datetime.strptime(row.get('started_at'), '%Y-%m-%d %H:%M:%S.%f')
+                            try:
+                                ride_time = datetime.strptime(row.get('started_at'), '%Y-%m-%d %H:%M:%S')
+                            except:
+                                ride_time = datetime.strptime(row.get('started_at'), '%Y-%m-%d %H:%M:%S.%f')
                             station_id_key = f'{station_type}_station_id'
                             station_name_key = f'{station_type}_station_name'
                             station_lat_key = f'{station_type}_lat'

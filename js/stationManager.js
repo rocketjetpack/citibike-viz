@@ -8,8 +8,13 @@
   let stationMarkers = new Map(); // station_id => marker
   let selectedStationId = null;
   export const stationCoords = new Map();
+  const stationNames = new Map(); // station_id => station_name
 
   const debouncedUpdateMarkerStyles = debounce(updateAllMarkerStyles, 100);
+
+  export function getStationNameById(stationId) {
+    return stationNames.get(stationId) || '';
+  }
 
   export async function initializeStationManager(map) {
     let justClickedMarker = false;
@@ -37,6 +42,8 @@
       });
       marker.bindTooltip(station.station_name, { permanent: false });
       stationMarkers.set(stationId, marker);
+
+      stationNames.set(stationId, station.station_name);
     });
 
     updateVisibleStations(getSelectedMonth(), map.getZoom());
@@ -168,6 +175,7 @@
       .then(data => {
         // Process hourly counts
         const { hourlyCounts, rideTypeTotals } = processHourlyRideData(data.rides);
+        console.log(hourlyCounts, rideTypeTotals);
         
         updatePanelCounts({
           inbound: data.summary.total_inbound,

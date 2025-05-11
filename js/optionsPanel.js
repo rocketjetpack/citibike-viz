@@ -6,6 +6,10 @@ export function getCheckedRideDirections() {
     return [ document.getElementById('chkShowOutbound').checked, document.getElementById('chkShowInbound').checked ];
 }
 
+export function getCheckedShowOneRouteRides() {
+    return document.getElementById('chkShowRoutesWithOneRide').checked;
+}
+
 export function initializeOptionsPanel() {
   const optionsPanel = document.getElementById('optionsPanel');
   const optionsHeader = document.getElementById('optionsHeader');
@@ -60,6 +64,7 @@ function saveOptionsState() {
       showTopRoutes: document.getElementById('chkShowTop50').checked,
       showInboundRides: document.getElementById('chkShowInbound').checked,
       showOutboundRides: document.getElementById('chkShowOutbound').checked,
+      showOneRideRoutes: document.getElementById('chkShowRoutesWithOneRide').checked
   };
   localStorage.setItem('optionsState', JSON.stringify(state));
 }
@@ -71,6 +76,12 @@ function initializeEventListeners() {
   const topRoutesToggle = document.getElementById('chkShowTop50');
   const showInboundRides = document.getElementById('chkShowInbound');
   const showOutboundRides = document.getElementById('chkShowOutbound');
+  const chkShowRoutesWithOneRide = document.getElementById('chkShowRoutesWithOneRide');
+
+    // FUTURE: Event hook for change in check state of the chkShowOneRideRoutes box
+    chkShowRoutesWithOneRide.addEventListener('change', () => {
+        saveOptionsState();
+        });
 
   // Month slider event
   monthSlider.addEventListener('input', (e) => {
@@ -106,6 +117,7 @@ function initializeEventListeners() {
       topRoutesToggle.checked = savedState.showTopRoutes;
       showInboundRides.checked = savedState.showInboundRides;
       showOutboundRides.checked = savedState.showOutboundRides;
+      chkShowRoutesWithOneRide.checked = savedState.showOneRideRoutes;
 
       // Apply the dark theme if saved in localStorage
       if (savedState.darkTheme) {

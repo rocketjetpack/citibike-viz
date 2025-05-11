@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -18,6 +17,14 @@
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     crossorigin=""
   ></script>
+<!-- Leaflet PolylineDecorator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.1.0/leaflet.polylineDecorator.js" 
+          integrity="sha512-2O0hTygh15NNca+mit+zXl9scGXwhpq6sFI0KwzGhYh1Zlyje3TOGhWum9cFzYOVF7ek63wLVznRa/9W8dXdlw=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
+  </script>
+  <!-- Leaflet GeometryUtil -->
+  <script src=" https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.10.3/src/leaflet.geometryutil.min.js "></script>
   <input type="hidden" id="selectedStationId"></input>
 </head>
 <body>
@@ -62,6 +69,10 @@
         <div id="monthLabel">January</div>
         <input type="range" id="monthSlider" min="1" max="12" value="1" />
       </div>
+      <label>
+        <input type="checkbox" id="chkShowRoutesWithOneRide">
+        Show Routes With Only 1 Ride
+      </label>
       <label>
         <input type="checkbox" id="chkShowTop50">
         Show Top 50 Routes

@@ -32,7 +32,7 @@ function loadSavedState() {
     document.getElementById('monthSlider').value = savedState.month;
     document.getElementById('monthLabel').textContent = getMonthName(savedState.month);
     document.getElementById('chkDarkTheme').checked = savedState.darkTheme;
-    document.getElementById('chkShowTop50').checked = savedState.showTopRoutes;
+    document.getElementById('chkShowTop100').checked = savedState.showTopRoutes;
     document.getElementById('chkShowInbound').checked = savedState.showInboundRides;
     document.getElementById('chkShowOutbound').checked = savedState.showOutboundRides;
 

@@ -61,7 +61,7 @@ function saveOptionsState() {
       left: document.getElementById('optionsPanel').style.left,
       month: document.getElementById('monthSlider').value,
       darkTheme: document.getElementById('chkDarkTheme').checked,
-      showTopRoutes: document.getElementById('chkShowTop50').checked,
+      showTopRoutes: document.getElementById('chkShowTop100').checked,
       showInboundRides: document.getElementById('chkShowInbound').checked,
       showOutboundRides: document.getElementById('chkShowOutbound').checked,
       showOneRideRoutes: document.getElementById('chkShowRoutesWithOneRide').checked
@@ -73,7 +73,7 @@ function saveOptionsState() {
 function initializeEventListeners() {
   const monthSlider = document.getElementById('monthSlider');
   const darkThemeToggle = document.getElementById('chkDarkTheme');
-  const topRoutesToggle = document.getElementById('chkShowTop50');
+  const topRoutesToggle = document.getElementById('chkShowTop100');
   const showInboundRides = document.getElementById('chkShowInbound');
   const showOutboundRides = document.getElementById('chkShowOutbound');
   const chkShowRoutesWithOneRide = document.getElementById('chkShowRoutesWithOneRide');

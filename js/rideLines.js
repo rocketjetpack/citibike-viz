@@ -4,6 +4,7 @@ import { getCheckedRideDirections, getCheckedShowOneRouteRides } from './options
 let rideLineLayer = null;
 const canvasRenderer = L.canvas();
 const animations = [];
+const globalLineCountLimit = 500;
 
 export function initializeRideLines(mapInstance) {
   rideLineLayer = L.layerGroup().addTo(mapInstance);
@@ -11,7 +12,10 @@ export function initializeRideLines(mapInstance) {
 
 export function destroyRideLines() {
   rideLineLayer.clearLayers();
-  animations.forEach(animation => clearInterval(animation));
+  animations.forEach(animation => {
+    cancelAnimationFrame(animation);
+  });
+  animations.length = 0;  // Clear the animations array
 }
 
 function calculateRideLinesToDraw(rides) {
@@ -55,18 +59,16 @@ function calculateRideLinesToDraw(rides) {
   lines.sort((a, b) => b.count - a.count);
 
   // Check if the "Show Top 50" checkbox is checked
-  if (document.getElementById('chkShowTop50').checked) {
-    // Return only the top 50 rides by count
-    return lines.slice(0, 50);
-  }
+  const lineCountLimit = document.getElementById('chkShowTop100').checked ? 100 : globalLineCountLimit;
 
-  console.info("calculateRideLinesToDraw() returning ", lines.length, " lines to draw.");
-  return lines;
+
+  return lines.slice(0, lineCountLimit);
 }
-
 
 let lastFrameTime = 0;  // Timestamp of the last frame update
 const frameDelay = 1000 / 60;  // Frame delay for 60 FPS
+
+const arrowSpeedLimit = 0.025;  // Speed limit for the arrowhead (adjust this value to control speed)
 
 export function drawRideLines(rideData) {
   if (!rideLineLayer) {
@@ -77,6 +79,7 @@ export function drawRideLines(rideData) {
   rideLineLayer.clearLayers();
 
   const linesToDraw = calculateRideLinesToDraw(rideData.rides);
+  console.log("Retrieved ", linesToDraw.length, " lines to draw.");
 
   let i = 0; // For varying curve direction
 
@@ -84,6 +87,10 @@ export function drawRideLines(rideData) {
   const minAlpha = 0.2; // Minimum opacity for lines
   const maxAlpha = 0.6; // Maximum opacity for lines
 
+  // Store references to decorators
+  const decorators = [];
+
+  // Calculate all the lines and their arrow patterns in advance
   for (const { startCoords, endCoords, color, label, count, dir } of linesToDraw) {
     const curvePoints = getSmoothCurvedLine(startCoords, endCoords, dir, i++);
 
@@ -94,7 +101,7 @@ export function drawRideLines(rideData) {
       weight: 3,
       opacity: alpha,
       renderer: canvasRenderer
-    }).bindTooltip(label, { permanent: false });
+    }).bindTooltip(label, { permanent: false, interactive: true });
 
     rideLineLayer.addLayer(polyline);
 
@@ -103,17 +110,18 @@ export function drawRideLines(rideData) {
 
     // Adaptive number of arrowheads based on ride count and line length
     const baseArrowheads = Math.floor(count / 10);  // 1 arrowhead per 10 rides
-    const arrowCount = Math.min(baseArrowheads == 0 ? 1 : baseArrowheads, 10); // Cap number of arrowheads at 10 per route
+    const arrowCount = Math.min(baseArrowheads == 0 ? 2 : baseArrowheads, 10); // Cap number of arrowheads at 10 per route
     
     // Calculate the percentage step for arrowhead offset, relative to line length
     const offsetStep = lineLength / arrowCount;
 
     const patterns = [];
     const arrowOffsets = []; // To track the offset of each arrowhead
+    let offsetPct = 0;    
 
     for (let j = 1; j <= arrowCount; j++) {
       const offsetDistance = offsetStep * j; // Proportional distance along the line
-      const offsetPct = offsetDistance / lineLength; // Percentage of the total line length
+      offsetPct = offsetDistance / lineLength; // Percentage of the total line length
 
       arrowOffsets.push(offsetPct * 100); // Track the initial offset for each arrowhead
 
@@ -125,21 +133,26 @@ export function drawRideLines(rideData) {
           pathOptions: {
             stroke: true,
             color,
-            opacity: alpha
+            opacity: alpha,
+            pointerEvents: 'none'
           }
         })
       });
     }
 
+    // Add the decorator (for visualizing the arrowhead pattern)
     const decorator = L.polylineDecorator(polyline, { patterns });
     rideLineLayer.addLayer(decorator);
 
-    // Start the animation of arrowheads along the curve
-    animateArrowheads(decorator, polyline, arrowOffsets, arrowCount, lineLength, color, alpha);
+    // Store the decorator and the offsets for animation
+    decorators.push({ decorator, polyline, arrowOffsets, arrowCount, lineLength, color, alpha });
   }
+
+  // Start animating the arrowheads
+  animateArrowheads(decorators);
 }
 
-function animateArrowheads(decorator, polyline, arrowOffsets, arrowCount, lineLength, color, alpha) {
+function animateArrowheads(decorators) {
   let lastUpdateTime = 0;  // Track last update time for throttling
 
   function moveArrowheads(timestamp) {
@@ -151,47 +164,69 @@ function animateArrowheads(decorator, polyline, arrowOffsets, arrowCount, lineLe
 
     lastUpdateTime = timestamp;
 
-    // Loop over each arrowhead
-    for (let i = 0; i < arrowCount; i++) {
-      // Update the offset for each arrowhead
-      arrowOffsets[i] += 0.01 * 100; // Increase the offset percentage
+    // Loop over each route
+    decorators.forEach(({ decorator, arrowOffsets, arrowCount, lineLength, color, alpha }) => {
+      const offsetStep = lineLength / arrowCount;
 
-      // When an arrowhead reaches the end of the line (100%), reset it to 0%
-      if (arrowOffsets[i] >= 100) {
-        arrowOffsets[i] = 0;  // Reset offset to 0
-      }
-    }
+      const patterns = [];
+      for (let i = 0; i < arrowCount; i++) {
+        // If no start offset is defined, randomize it
+        if (arrowOffsets[i] === undefined) {
+          arrowOffsets[i] = Math.random() * 100; // Randomize the start position of each arrowhead
+        }
 
-    const patterns = [];
-    const offsetStep = lineLength / arrowCount;
-    for (let j = 0; j < arrowCount; j++) {
-      const offsetPct = (arrowOffsets[j] + (offsetStep * j) / lineLength) % 100; // Ensure the offset is within 0-100%
+        // Calculate the speed as a fraction of the line length
+        //const distancePerFrame = 1/(lineLength/1000) * arrowSpeedLimit;// * lineLength;  // Total movement per frame based on line length
+        
+        const distancePerFrame = lineLength * arrowSpeedLimit > 50 ? 50 : lineLength * arrowSpeedLimit;
+        
 
-      patterns.push({
-        offset: `${offsetPct}%`,
-        symbol: L.Symbol.arrowHead({
-          pixelSize: 6,
-          polygon: false,
-          pathOptions: {
-            stroke: true,
-            color,
-            opacity: alpha
+        // For a single arrowhead, calculate the movement based on the line length
+        if (arrowCount === 1) {
+          arrowOffsets[i] += (distancePerFrame / 100);  // Increment by the distance for the current frame
+
+          // Reset offset when the arrowhead reaches the end
+          if (arrowOffsets[i] >= 100) {
+            arrowOffsets[i] = 0; // Reset to 0% at the end of the line
           }
-        })
-      });
-    }
+        } else {
+          // For multiple arrowheads, just adjust the offset based on a fixed increment
+          arrowOffsets[i] += (distancePerFrame / 100);  // Same as above, adjusted by line length
 
-    // Update the arrowhead positions (batch update)
-    decorator.setPatterns(patterns);
+          if (arrowOffsets[i] >= 100) {
+            arrowOffsets[i] = 0;  // Reset offset to 0 if it goes past the end
+          }
+        }
+
+        // Calculate the new pattern offsets
+        const offsetPct = (arrowOffsets[i] + (offsetStep * i) / lineLength) % 100; // Ensure the offset is within 0-100%
+
+        patterns.push({
+          offset: `${offsetPct}%`,
+          symbol: L.Symbol.arrowHead({
+            pixelSize: 6,
+            polygon: false,
+            pathOptions: {
+              stroke: true,
+              color,
+              opacity: alpha
+            }
+          })
+        });
+      }
+
+      // Update the arrowhead positions (batch update)
+      decorator.setPatterns(patterns);
+    });
 
     // Request the next frame for smooth animation
     requestAnimationFrame(moveArrowheads);
   }
 
   // Start the animation loop
-  requestAnimationFrame(moveArrowheads);
+  const animationId = requestAnimationFrame(moveArrowheads);
+  animations.push(animationId); // Store the animation ID for stopping later
 }
-
 
 function getSmoothCurvedLine(start, end, direction, directionOffsetIndex = 0) {
   const lat1 = start[0], lng1 = start[1];

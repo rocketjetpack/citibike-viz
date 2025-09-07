@@ -179,3 +179,7 @@ data/stations/*
 data/rides/*
 data/top50/*
 private/*
+
+# Old dir
+old/
+old/*

@@ -1,0 +1,100 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citi Bike Data Visualization</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/optionsPanel.css">
+  <link rel="stylesheet" href="css/stationPanel.css">
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin=""
+  />
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+<!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+<!-- Leaflet PolylineDecorator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.1.0/leaflet.polylineDecorator.js" 
+          integrity="sha512-2O0hTygh15NNca+mit+zXl9scGXwhpq6sFI0KwzGhYh1Zlyje3TOGhWum9cFzYOVF7ek63wLVznRa/9W8dXdlw=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
+  </script>
+  <!-- Leaflet GeometryUtil -->
+  <script src=" https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.10.3/src/leaflet.geometryutil.min.js "></script>
+  <input type="hidden" id="selectedStationId"></input>
+</head>
+<body>
+  <!-- Header Section -->
+  <header id="mainHeader">Citi Bike Dashboard</header>
+
+  <!-- Main Content Section -->
+  <main>
+    <div id="map"></div> <!-- Map Container -->
+
+    <div id="stationPanel">
+      <div id="stationHeader">Station Information</div>
+      <div id="stationName">Station Name</div>
+      <!-- Grouping Ride Counts -->
+      <div id="rideCountsGroup">
+        <div id="rideCountsHeader">Ride Data</div>
+        <div id="rideCounts">
+          <div>
+            <div>Inbound</div>
+            <div id="inboundCount">0</div>
+          </div>
+          <div>
+            <div>Outbound</div>
+            <div id="outboundCount">0</div>
+          </div>
+        </div>
+        <div id="bikeFlux">
+          <div id="rideCountsHeader">
+            <div>Bike Flux</div>
+            <div id="bikeFluxCount">0</div>
+          </div>
+        </div>
+      </div>
+      <div id="histogramChartContainer"><canvas id="histogramChart" width="400" height="300"></canvas></div>
+      <div id="rideTypeChartContainer"><div id="rideTypeChart" height="200"></div></div>
+    </div>    
+
+    <!-- Options Panel -->
+    <div id="optionsPanel">
+      <div id="optionsHeader">Options</div>
+      <div class="monthSelector">
+        <div id="monthLabel">January</div>
+        <input type="range" id="monthSlider" min="1" max="12" value="1" />
+      </div>
+      <label>
+        <input type="checkbox" id="chkShowRoutesWithOneRide">
+        Show Routes With Only 1 Ride
+      </label>
+      <label>
+        <input type="checkbox" id="chkShowTop100">
+        Show Top 100 Routes
+      </label>
+      <label>
+        <input type="checkbox" id="chkShowInbound">
+        Show Inbound Rides
+      </label>
+      <label>
+        <input type="checkbox" id="chkShowOutbound">
+        Show Outbound Rides
+      </label>
+      <div>
+        <label>
+          <input type="checkbox" id="chkDarkTheme">
+          Dark Theme
+        </label>
+      </div>
+    </div>
+  </main>
+
+  <!-- Load the init.js module -->
+  <script type="module" src="js/init.js"></script>
+</body>
+</html>

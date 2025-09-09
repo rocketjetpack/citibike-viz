@@ -5,21 +5,17 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 import shutil
 
-# Directory containing Stage 2 data
-STAGE2_DIR = Path('../../private/stage2')
-# Directory to save the cleaned data in Stage 3
-STAGE3_DIR = Path('../../private/stage3')
-
 # Columns to drop
 COLUMNS_TO_DROP = ['start_lat', 'start_lng', 'end_lat', 'end_lng', 'ended_at']
 
 # Function to clean a single file and save it to Stage 3
-def clean_file(file):
+def clean_file(args):
+    file, work_dir, output_dir = args
     # Get the relative path within stage2, which includes the subdirectories (station_id, year, month)
-    relative_path = file.relative_to(STAGE2_DIR)
+    relative_path = file.relative_to(work_dir)
 
     # Create the target directory in stage3 by extracting the appropriate parts of the relative path
-    target_file = STAGE3_DIR / relative_path
+    target_file = output_dir / relative_path
     target_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Open the source file for reading
@@ -42,25 +38,20 @@ def clean_file(file):
         writer.writerows(rows)
 
 # Function to process each station directory (returning a list of CSV files to clean)
-def get_csv_files_to_clean():
+def get_csv_files_to_clean(work_dir):
     files_to_clean = []
     # Traverse all directories and subdirectories under stage2
-    for station_dir in STAGE2_DIR.rglob('*/*/*.csv'):  # This matches the input structure
+    for station_dir in work_dir.rglob('*/*/*.csv'):  # This matches the input structure
         if station_dir.is_file():
-            print(f"Found file: {station_dir}")  # Debug print
             files_to_clean.append(station_dir)
     return files_to_clean
 
 # Function to clean files in parallel with a progress bar
-def clean_stage2_files_parallel():
-    # Ensure Stage 3 directory exists
-    if STAGE3_DIR.exists():
-        shutil.rmtree(STAGE3_DIR)  # Clean the existing backup if it exists
-    STAGE3_DIR.mkdir(parents=True, exist_ok=True)
-
-    files_to_clean = get_csv_files_to_clean()
+def clean_stage2_files_parallel(work_dir, output_dir):
+    files_to_clean = get_csv_files_to_clean(work_dir)
     
     print(f"Found {len(files_to_clean)} files to clean.")
+    args_list = [(fname, work_dir, output_dir) for fname in files_to_clean]
 
     if len(files_to_clean) == 0:
         print("No files found to clean. Please check the directory structure.")
@@ -71,10 +62,39 @@ def clean_stage2_files_parallel():
 
     # Use tqdm for the progress bar
     with Pool(processes=num_workers) as pool:
-        list(tqdm(pool.imap(clean_file, files_to_clean), total=len(files_to_clean), desc="Cleaning Files"))
+        list(tqdm(pool.imap(clean_file, args_list), total=len(args_list), desc="Cleaning Files"))
 
-    print("Stage 2 files cleaned and backed up to Stage 3 successfully.")
+    return files_to_clean
 
 # Run the parallel cleanup function
+def run(input_dir, work_dir, output_dir):
+    # As the first step, copy the contents of output_dir to work_dir
+    if work_dir.exists():
+        shutil.rmtree(work_dir)
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    if output_dir.exists():
+        print(f"[COPY] Syncing {output_dir} to {work_dir}")
+        for item in output_dir.iterdir():
+            dest = work_dir / item.name
+            if item.is_dir():
+                shutil.copytree(item, dest, dirs_exist_ok=True)
+            else:
+                shutil.copy2(item, dest)
+
+    # Proceed with stage
+    clean_stage2_files_parallel(work_dir, output_dir)
+
+    # If were still running things are good, copy work_dir to output_dir
+    print(f"[COPY] Syncing {work_dir} to {output_dir}")
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+    for item in work_dir.iterdir():
+        dest = output_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, dest, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, dest)
+
 if __name__ == "__main__":
-    clean_stage2_files_parallel()
+    print("Do not run this script interactively.")

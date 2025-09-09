@@ -8,16 +8,6 @@ from datetime import datetime
 import shutil
 import re
 
-# Define input/output paths
-INPUT_ROOT = Path("../../private/stage4")
-OUTPUT_ROOT = Path("../../private/stage5")
-
-# Clean and prepare output directory
-def prepare_output_dir():
-    if OUTPUT_ROOT.exists():
-        shutil.rmtree(OUTPUT_ROOT)
-    OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
-
 # Extract "YYYY-mm" from timestamp
 def get_ym(timestamp):
     try:
@@ -54,7 +44,7 @@ def merge_results(partial_results):
     return final
 
 # Save results to correct path format
-def save_top_50(final_counts):
+def save_top_50(final_counts, output_dir):
     for month, counter in final_counts.items():
         top_50 = counter.most_common(50)
         formatted = [
@@ -65,23 +55,21 @@ def save_top_50(final_counts):
             }
             for (sid, eid), count in top_50
         ]
-        out_path = OUTPUT_ROOT / f"{month}-top-50.json"
+        out_path = output_dir / f"{month}-top-50.json"
         with open(out_path, 'w', encoding='utf-8') as f:
             json.dump(formatted, f, indent=4)
 
 # Main pipeline
-def run_stage5():
-    prepare_output_dir()
-
-    json_files = list(INPUT_ROOT.rglob("*/*/*.json"))
+def run(input_dir, work_dir, output_dir):
+    json_files = list(output_dir.rglob("*/*/*.json"))
 
     with Pool(processes=2 * cpu_count()) as pool:
         results = list(tqdm(pool.imap(process_file, json_files), total=len(json_files), desc="Processing JSON files"))
 
     final_counts = merge_results(results)
-    save_top_50(final_counts)
+    save_top_50(final_counts, output_dir)
 
-    print("✅ Stage 5 complete: Top 50 outbound rides per month written to stage5.")
+    print(f"✅ Stage 5 complete: Top 50 outbound rides per month written to {output_dir}.")
 
 if __name__ == "__main__":
-    run_stage5()
+    print("Do not run this script interactively.")

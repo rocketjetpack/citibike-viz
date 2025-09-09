@@ -1,0 +1,8 @@
+input_dir: '/srv/cb-data/input'
+output_dir: '/srv/cb-data/output'
+work_dir: '/srv/cb-data/work'
+workers: 5
+log_every_n: 10000
+stations_csv: 'station_list.csv'
+aggregated_csv: 'aggregated_rides.csv'
+metadata_file: 'pipeline.json'

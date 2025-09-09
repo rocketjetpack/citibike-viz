@@ -1,17 +1,24 @@
+#!/usr/bin/env python3
+
+# This stage does the following:
+# Extract a list of stations by examining all rows in the input CSV files to populate
+#   the station_list.csv file used by later stages.
+
 import os
 import csv
 import zipfile
 import sys
 import re
 from datetime import datetime
-
-DEBUG=False
+from pathlib import Path
 
 def extract_unique_stations(zip_dir, output_csv_path):
     unique_stations = {}
     row_counter = 0
 
-    max_rows = 500000 if DEBUG else None
+    # Set to -1 to scan all stations or a positive integer to terminate this
+    # stage after some number of unique stations have been identified.
+    max_rows = -1
 
     def print_progress(count):
         sys.stdout.write(f'\rProcessed rows: {count:,}')
@@ -31,12 +38,6 @@ def extract_unique_stations(zip_dir, output_csv_path):
                     continue
 
                 with zf.open(csv_filename) as csvfile:
-                    print(f"Opened {csv_filename}!!!!")
-                    print(f"Opened {csv_filename}!!!!")
-                    print(f"Opened {csv_filename}!!!!")
-                    print(f"Opened {csv_filename}!!!!")
-                    print(f"Opened {csv_filename}!!!!")
-                    print(f"Opened {csv_filename}!!!!")
                     try:
                         reader = csv.DictReader((line.decode('utf-8') for line in csvfile), delimiter=',')
                     except:
@@ -47,7 +48,8 @@ def extract_unique_stations(zip_dir, output_csv_path):
                         if row_counter % 50000 == 0:
                             print_progress(row_counter)
 
-                        if DEBUG and row_counter >= max_rows:
+                        if max_rows > 0 and row_counter >= max_rows:
+                            print(f"Reached the target row count of {max_rows} and aborting.")
                             break
 
                         for station_type in ['start', 'end']:
@@ -89,8 +91,8 @@ def extract_unique_stations(zip_dir, output_csv_path):
 
     print(f'Done. Saved to {output_csv_path}')
 
-if __name__ == "__main__":
-    if DEBUG:
-        print("Running in debug mode, only processing the first 100k rows of data.")
-    extract_unique_stations("../../private/raw_data/2024/", "../../private/stage1/station_list.csv")
+def run(input_dir, work_dir, output_dir):
+    extract_unique_stations(input_dir, Path(output_dir, "station_list.csv"))
 
+if __name__ == "__main__":
+    print("Do not run this script interactively.")

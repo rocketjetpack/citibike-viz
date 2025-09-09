@@ -1,0 +1,10 @@
+completed_stages:
+- stages.stage_04_sort_and_recode
+- stages.stage_06_convert_to_json
+- stages.stage_01_validate_zip
+- stages.stage_02_confirm_columns
+- stages.stage_03_extract_stations
+- stages.stage_07_top_routes
+- stages.stage_05_clean_csvs
+- stages.stage_08_remove_csvs
+last_run: '2025-09-07T20:27:45.827654'

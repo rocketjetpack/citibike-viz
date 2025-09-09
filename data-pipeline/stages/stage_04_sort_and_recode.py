@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+# This stage does the following:
+# Extract a list of stations by examining all rows in the input CSV files to populate
+#   the station_list.csv file used by later stages.
+
+
 import csv
 import os
 from pathlib import Path
@@ -7,9 +14,16 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 from math import radians, sin, cos, sqrt, atan2
 
-INPUT_DIR = Path('../../private/raw_data/2024')
-OUTPUT_BASE = Path('../../private/stage2')
-STATION_LIST_CSV = Path('../../private/stage1/station_list.csv')
+def run(input_dir, work_dir, output_dir):
+    valid_stations = load_station_ids(Path(f'{output_dir}/station_list.csv'))
+    zip_files = sorted(input_dir.glob('*.zip'))
+    print(f"Found {len(zip_files)} zip files. Loaded {len(valid_stations)} known station IDs.")
+
+    args = [(zip_path, valid_stations, output_dir) for zip_path in zip_files]
+
+    with Pool(processes=cpu_count()) as pool:
+        list(tqdm(pool.imap_unordered(process_zip, args),
+                  total=len(zip_files), desc="Processing ZIPs"))
 
 # Load list of known station IDs
 def load_station_ids(station_list_path):
@@ -23,9 +37,9 @@ def load_station_ids(station_list_path):
     return station_ids
 
 # Define output path per station/month
-def get_output_path(station_id, year, month):
+def get_output_path(station_id, year, month, output_dir):
     prefix = station_id[:2] if len(station_id) >= 2 else '00'
-    return OUTPUT_BASE / prefix / station_id / f"{year}-{month:02d}-ridedata.csv"
+    return output_dir / prefix / station_id / f"{year}-{month:02d}-ridedata.csv"
 
 # Haversine formula to calculate the great circle distance
 def haversine(lat1, lon1, lat2, lon2):
@@ -95,7 +109,7 @@ def transform_row(row, current_station_id):
 
 # Process a single zip file
 def process_zip(args):
-    zip_path, valid_stations = args
+    zip_path, valid_stations, output_dir = args
     output_buffers = {}  # {(station_id, year, month): [rows]}
     total_rows = 0
     bad_rows = 0
@@ -142,7 +156,7 @@ def process_zip(args):
                         output_buffers.setdefault(key, []).append(transformed)
 
     for (station_id, year, month), rows in output_buffers.items():
-        output_path = get_output_path(station_id, year, month)
+        output_path = get_output_path(station_id, year, month, output_dir)
         os.makedirs(output_path.parent, exist_ok=True)
         write_header = not output_path.exists()
         with open(output_path, 'a', newline='', encoding='utf-8') as f_out:
@@ -152,18 +166,6 @@ def process_zip(args):
             writer.writerows(rows)
 
     print(f"[{zip_path.name}] Processed {total_rows} rows, {bad_rows} bad format, {skipped_station_rows} with unknown stations.")
-
-# Main multiprocessing logic with progress bar
-def main():
-    valid_stations = load_station_ids(STATION_LIST_CSV)
-    zip_files = sorted(INPUT_DIR.glob('*.zip'))
-    print(f"Found {len(zip_files)} zip files. Loaded {len(valid_stations)} known station IDs.")
-
-    args = [(zip_path, valid_stations) for zip_path in zip_files]
-
-    with Pool(processes=cpu_count()) as pool:
-        list(tqdm(pool.imap_unordered(process_zip, args),
-                  total=len(zip_files), desc="Processing ZIPs"))
-
+    
 if __name__ == '__main__':
-    main()
+    print("Do not run this script interactively.")
